@@ -38,3 +38,68 @@ leaderboard.top(3);           // returns 141 = 51 + 51 + 39;
 2. It's guaranteed that K is less than or equal to the current number of players.
 3. 1 <= score <= 100
 4. There will be at most 1000 function calls.
+
+## Implementation 1 : Map and TreeMap
+```java
+class Leaderboard {
+    Map<Integer,Integer> map;
+    TreeMap<Integer,List<Integer>> tMap;
+    public Leaderboard() {
+        map = new HashMap<>();
+        tMap = new TreeMap<>((a, b) -> b-a);
+    }
+    
+    public void addScore(int playerId, int score) {
+        boolean exists = map.containsKey(playerId);
+        int prevScore = map.getOrDefault(playerId, 0);
+        int newScore = prevScore + score;
+        map.put(playerId, newScore);
+        // check if the playedId was already there or its new playerId
+        if(exists) {
+            List<Integer> ids = tMap.get(prevScore);
+            int index = ids.indexOf(playerId);
+            ids.remove(index);  
+        } 
+        tMap.putIfAbsent(newScore, new ArrayList<Integer>());
+        tMap.get(newScore).add(playerId);
+    }
+    
+    public int top(int K) {
+        int selected = 0;
+        int sum = 0;
+        for(Map.Entry<Integer,List<Integer>> scoreIds : tMap.entrySet()) {
+            int score = scoreIds.getKey();
+            List<Integer> playerIds = scoreIds.getValue();
+            for(int playerId : playerIds) {
+                sum += score;
+                selected++;
+                if(selected == K)
+                  return sum;
+            }
+        }
+        return sum;
+    }
+    
+    public void reset(int playerId) {
+        // the player is guaranteed to be in tha map before calling reset
+        int score = map.get(playerId);
+        if(score == 0) 
+           return;
+
+        map.put(playerId,0);
+        List<Integer> playerIds = tMap.get(score);
+        int index = playerIds.indexOf(playerId);
+        playerIds.remove(index);
+        tMap.putIfAbsent(0, new ArrayList<Integer>());
+        tMap.get(0).add(playerId);
+    }
+}
+
+/**
+ * Your Leaderboard object will be instantiated and called as such:
+ * Leaderboard obj = new Leaderboard();
+ * obj.addScore(playerId,score);
+ * int param_2 = obj.top(K);
+ * obj.reset(playerId);
+ */
+```
